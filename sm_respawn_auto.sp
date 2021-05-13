@@ -47,7 +47,7 @@ public void OnGameFrame()
 
  public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
  {
-    if (!g_cvAutoRespawn.BoolValue)
+    if (g_cvAutoRespawn.BoolValue)
     {
         int health = GetClientHealth(victim);
         float game_time = GetGameTime();
@@ -165,4 +165,5 @@ public Action CMD_RespawnReset(int client, int args)
 {
     for (int i = 1; i < MaxClients; ++i)
         ResetData(i);
+    return Plugin_Handled;
 }
