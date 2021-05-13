@@ -5,6 +5,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+#define ADMFLAG_RESPAWN ADMFLAG_SLAY
+
 public Plugin myinfo = {
     name        = "Player Auto Respawn",
     author      = "rdbo",
@@ -33,23 +35,29 @@ public void OnGameFrame()
         
         int team = GetClientTeam(i);
         
-        if (!IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
+        if (!IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T))
         {
-            RespawnPlayer(i);
+            if (g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
+            {
+                RespawnPlayer(i);
+            }
         }
     }
 }
 
  public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
  {
-    int health = GetClientHealth(victim);
-    float game_time = GetGameTime();
-    
-    if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue || damagetype & (DMG_BULLET | DMG_SLASH))
-        return Plugin_Handled;
+    if (!g_cvAutoRespawn.BoolValue)
+    {
+        int health = GetClientHealth(victim);
+        float game_time = GetGameTime();
         
-    if (damage >= health)
-        HandleDeath(victim);
+        if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue || damagetype & (DMG_BULLET | DMG_SLASH))
+            return Plugin_Handled;
+            
+        if (damage >= health)
+            HandleDeath(victim);
+    }
         
     return Plugin_Continue;
  }
@@ -105,6 +113,7 @@ public void OnPluginStart()
     HookEvent("player_spawn", HkPlayerSpawn, EventHookMode_Post);
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Pre);
     HookEvent("round_freeze_end", HkRoundFreezeEnd, EventHookMode_PostNoCopy);
+    RegAdminCmd("sm_respawn_reset", CMD_RespawnReset, ADMFLAG_RESPAWN, "Resets All Spawn Data");
 }
 
 public void OnClientConnected(int client)
@@ -143,10 +152,17 @@ void HandleDeath(int client)
     {
         g_ConsecutiveDeaths[client] += 1;
     }
+    
     else
     {
         g_ConsecutiveDeaths[client] = 0;
     }
     
     g_LastDeath[client] = game_time;
+}
+
+public Action CMD_RespawnReset(int client, int args)
+{
+    for (int i = 1; i < MaxClients; ++i)
+        ResetData(i);
 }
