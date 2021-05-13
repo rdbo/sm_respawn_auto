@@ -27,8 +27,12 @@ public void OnGameFrame()
     
     for (int i = 1; i < MaxClients; ++i)
     {
+        if (!IsClientInGame(i))
+            continue;
+        
         int team = GetClientTeam(i);
-        if (IsClientInGame(i) && !IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
+        
+        if (!IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
         {
             PrintToChat(i, "[GAME FRAME] Forcing Respawn...");
             PrintToChat(i, "[PLAYER DEATH] Game Time:  %f", GetGameTime());
