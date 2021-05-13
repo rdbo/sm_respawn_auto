@@ -62,7 +62,7 @@ public void HkPlayerDeath(Event event, const char[] name, bool dontBroadcast)
     g_LastDeath[client] = game_time;
 }
 
-public Action HkRoundEnd(Handle event, const char[] name, bool dontBroadcast)
+public Action HkRoundStart(Handle event, const char[] name, bool dontBroadcast)
 {
     for (int i = 1; i < MaxClients; ++i)
     {
@@ -79,7 +79,7 @@ public void OnPluginStart()
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
     g_cvKillerTime = CreateConVar("sm_respawn_killer", "10", "Minimum time to consider as consecutive death");
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Post);
-    HookEvent("round_end", HkRoundEnd, EventHookMode_Post);
+    HookEvent("round_start", HkRoundStart, EventHookMode_PostNoCopy);
 }
 
 public void OnClientConnected(int client)
