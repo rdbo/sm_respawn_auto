@@ -4,8 +4,6 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define ADMFLAG_RESPAWN ADMFLAG_SLAY
-
 public Plugin myinfo = {
     name        = "Player Auto Respawn",
     author      = "rdbo",
@@ -40,6 +38,9 @@ public void OnGameFrame()
 
 public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
+    if (!g_cvAutoRespawn.BoolValue)
+        return Plugin_Continue;
+    
     float game_time = GetGameTime();
     if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue)
     {
@@ -67,6 +68,8 @@ public Action HkRoundEnd(Handle event, const char[] name, bool dontBroadcast)
     {
         ResetData(i);
     }
+    
+    return Plugin_Continue;
 }
 
 public void OnPluginStart()
@@ -76,7 +79,7 @@ public void OnPluginStart()
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
     g_cvKillerTime = CreateConVar("sm_respawn_killer", "10", "Minimum time to consider as consecutive death");
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Post);
-    HookEvent("player_death", HkRoundEnd, EventHookMode_Post);
+    HookEvent("round_end", HkRoundEnd, EventHookMode_Post);
 }
 
 public void OnClientConnected(int client)
