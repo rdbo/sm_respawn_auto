@@ -27,10 +27,9 @@ public void OnGameFrame()
     
     for (int i = 1; i < MaxClients; ++i)
     {
-        float game_time = GetGameTime();
-        if (IsClientInGame(i) && !IsPlayerAlive(i) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
+        int team = GetClientTeam(i);
+        if (IsClientInGame(i) && !IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
         {
-            g_LastSpawn[i] = game_time;
             RespawnPlayer(i);
         }
     }
@@ -57,6 +56,15 @@ public Action HkPlayerDeath(Event event, const char[] name, bool dontBroadcast)
     return Plugin_Continue;
 }
 
+public Action HkPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
+{
+    int client_id = event.GetInt("userid");
+    int client = GetClientOfUserId(client_id);
+    float game_time = GetGameTime();
+    g_LastSpawn[client] = game_time;
+    return Plugin_Continue;
+}
+
 public Action HkRoundFreezeEnd(Handle event, const char[] name, bool dontBroadcast)
 {
     for (int i = 1; i < MaxClients; ++i)
@@ -73,6 +81,7 @@ public void OnPluginStart()
     g_cvRespawnProtection = CreateConVar("sm_respawn_prot", "10", "Respawn protection time");
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
     g_cvKillerTime = CreateConVar("sm_respawn_killer", "15", "Minimum time to consider as consecutive death ( > Protection time)");
+    HookEvent("player_spawn", HkPlayerSpawn, EventHookMode_Post);
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Pre);
     HookEvent("round_freeze_end", HkRoundFreezeEnd, EventHookMode_PostNoCopy);
 }
