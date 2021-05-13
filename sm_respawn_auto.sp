@@ -31,6 +31,10 @@ public void OnGameFrame()
         if (IsClientInGame(i) && !IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
         {
             PrintToChat(i, "[GAME FRAME] Forcing Respawn...");
+            PrintToChat(i, "[PLAYER DEATH] Game Time:  %f", GetGameTime());
+            PrintToChat(i, "[PLAYER DEATH] Last Spawn: %f", g_LastDeath[i]);
+            PrintToChat(i, "[PLAYER DEATH] Last Death: %f", g_LastDeath[i]);
+            PrintToChat(i, "[PLAYER DEATH] Deaths:     %i", g_ConsecutiveDeaths[i]);
             RespawnPlayer(i);
         }
     }
@@ -97,7 +101,7 @@ public void OnPluginStart()
     g_cvAutoRespawn = CreateConVar("sm_respawn_auto", "0", "Enable auto respawn");
     g_cvRespawnProtection = CreateConVar("sm_respawn_prot", "10", "Respawn protection time");
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
-    g_cvKillerTime = CreateConVar("sm_respawn_killer", "15", "Minimum time to consider as consecutive death ( > Protection time)");
+    g_cvKillerTime = CreateConVar("sm_respawn_killer", "15", "Maximum time to consider as consecutive death ( > Protection time)");
     HookEvent("player_spawn", HkPlayerSpawn, EventHookMode_Post);
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Pre);
     HookEvent("round_freeze_end", HkRoundFreezeEnd, EventHookMode_PostNoCopy);
