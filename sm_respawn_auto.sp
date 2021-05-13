@@ -1,5 +1,6 @@
 #include <sourcemod>
 #include <cstrike>
+#include <sdkhooks>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -34,43 +35,40 @@ public void OnGameFrame()
         
         if (!IsPlayerAlive(i) && (team == CS_TEAM_CT || team == CS_TEAM_T) && g_ConsecutiveDeaths[i] < g_cvMaxDeaths.IntValue)
         {
-            PrintToChat(i, "[GAME FRAME] Forcing Respawn...");
-            PrintToChat(i, "[PLAYER DEATH] Game Time:  %f", GetGameTime());
-            PrintToChat(i, "[PLAYER DEATH] Last Spawn: %f", g_LastDeath[i]);
-            PrintToChat(i, "[PLAYER DEATH] Last Death: %f", g_LastDeath[i]);
-            PrintToChat(i, "[PLAYER DEATH] Deaths:     %i", g_ConsecutiveDeaths[i]);
             RespawnPlayer(i);
         }
     }
 }
 
-public Action HkPlayerDeath(Event event, const char[] name, bool dontBroadcast)
-{
-    if (!g_cvAutoRespawn.BoolValue)
-        return Plugin_Continue;
-    
-    int client_id = event.GetInt("userid");
-    int client = GetClientOfUserId(client_id);
+ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+ {
+    int health = GetClientHealth(victim);
     float game_time = GetGameTime();
     
-    if (game_time - g_LastSpawn[client] < g_cvRespawnProtection.FloatValue)
-    {
-        PrintToChat(client, "[PLAYER DEATH] Respawn Protection");
+    if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue || damagetype & (DMG_BULLET | DMG_SLASH))
         return Plugin_Handled;
-    }
-    
-    if (game_time - g_LastDeath[client] < g_cvKillerTime.FloatValue)
+        
+    if (damage >= health)
+        HandleDeath(victim);
+        
+    return Plugin_Continue;
+ }
+
+public Action HkPlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+    if (g_cvAutoRespawn.BoolValue)
     {
-        g_ConsecutiveDeaths[client] += 1;
-        PrintToChat(client, "[PLAYER DEATH] Consecutive Death");
+        int client_id = event.GetInt("userid");
+        int client = GetClientOfUserId(client_id);
+        float game_time = GetGameTime();
+        
+        if (game_time - g_LastSpawn[client] < g_cvRespawnProtection.FloatValue)
+        {
+            return Plugin_Handled;
+        }
+        
+        HandleDeath(client);
     }
-    else
-    {
-        PrintToChat(client, "[PLAYER DEATH] Reset Deaths");
-        g_ConsecutiveDeaths[client] = 0;
-    }
-    
-    g_LastDeath[client] = game_time;
     
     return Plugin_Continue;
 }
@@ -83,7 +81,6 @@ public Action HkPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
     int client_id = event.GetInt("userid");
     int client = GetClientOfUserId(client_id);
     float game_time = GetGameTime();
-    PrintToChat(client, "[PLAYER SPAWN] You have spawned");
     g_LastSpawn[client] = game_time;
     return Plugin_Continue;
 }
@@ -92,7 +89,6 @@ public Action HkRoundFreezeEnd(Handle event, const char[] name, bool dontBroadca
 {
     for (int i = 1; i < MaxClients; ++i)
     {
-        PrintToChat(i, "[ROUND END] Your Data has been Reset");
         ResetData(i);
     }
     
@@ -119,6 +115,7 @@ public void OnClientConnected(int client)
 public void OnClientDisconnect(int client)
 {
     ResetData(client);
+    SDKUnhook(client, SDKHook_OnTakeDamage, OnTakeDamage);
 }
 
 void ResetData(int client)
@@ -128,7 +125,28 @@ void ResetData(int client)
     g_ConsecutiveDeaths[client] = 0;
 }
 
+public void OnClientPutInServer(int client)
+{	
+    SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+}
+
 void RespawnPlayer(int client)
 {
     CS_RespawnPlayer(client);
+}
+
+void HandleDeath(int client)
+{
+    float game_time = GetGameTime();
+    
+    if (game_time - g_LastDeath[client] < g_cvKillerTime.FloatValue)
+    {
+        g_ConsecutiveDeaths[client] += 1;
+    }
+    else
+    {
+        g_ConsecutiveDeaths[client] = 0;
+    }
+    
+    g_LastDeath[client] = game_time;
 }
