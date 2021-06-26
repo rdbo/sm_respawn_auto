@@ -19,6 +19,7 @@ ConVar g_cvAutoRespawn;
 ConVar g_cvRespawnProtection;
 ConVar g_cvKillerTime;
 ConVar g_cvMaxDeaths;
+ConVar g_cvPlayerDmg;
 float g_LastSpawn[MAXPLAYERS];
 float g_LastDeath[MAXPLAYERS];
 int g_ConsecutiveDeaths[MAXPLAYERS];
@@ -52,7 +53,7 @@ public void OnGameFrame()
         int health = GetClientHealth(victim);
         float game_time = GetGameTime();
         
-        if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue || damagetype & (DMG_BULLET | DMG_SLASH))
+        if (game_time - g_LastSpawn[victim] < g_cvRespawnProtection.FloatValue || (!g_cvPlayerDmg.BoolValue && (damagetype & (DMG_BULLET | DMG_SLASH))))
             return Plugin_Handled;
             
         if (damage >= health)
@@ -110,6 +111,7 @@ public void OnPluginStart()
     g_cvRespawnProtection = CreateConVar("sm_respawn_prot", "10", "Respawn protection time");
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
     g_cvKillerTime = CreateConVar("sm_respawn_killer", "15", "Maximum time to consider as consecutive death ( > Protection time)");
+    g_cvPlayerDmg = CreateConVar("sm_respawn_dmg", "1", "Enable Player Damage");
     HookEvent("player_spawn", HkPlayerSpawn, EventHookMode_Post);
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Pre);
     HookEvent("round_freeze_end", HkRoundFreezeEnd, EventHookMode_PostNoCopy);
