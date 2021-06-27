@@ -157,12 +157,12 @@ public Action HandleProtAlpha(Handle timer, int client)
     if (a == g_cvSpawnAlpha.IntValue)
     {
         a = 0xFF;
-        CreateTimer(g_cvRespawnProtection.FloatValue, HandleProtAlpha, client);
     }
     
     else
     {
         a = g_cvSpawnAlpha.IntValue;
+        CreateTimer(g_cvRespawnProtection.FloatValue, HandleProtAlpha, client);
     }
     
     SetEntityRenderColor(client, r, g, b, a);
