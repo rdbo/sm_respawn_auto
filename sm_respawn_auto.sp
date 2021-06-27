@@ -20,6 +20,7 @@ ConVar g_cvRespawnProtection;
 ConVar g_cvKillerTime;
 ConVar g_cvMaxDeaths;
 ConVar g_cvPlayerDmg;
+ConVar g_cvSpawnAlpha;
 float g_LastSpawn[MAXPLAYERS];
 float g_LastDeath[MAXPLAYERS];
 int g_ConsecutiveDeaths[MAXPLAYERS];
@@ -112,6 +113,7 @@ public void OnPluginStart()
     g_cvMaxDeaths = CreateConVar("sm_respawn_deaths", "5", "Maximum consecutive deaths");
     g_cvKillerTime = CreateConVar("sm_respawn_killer", "15", "Maximum time to consider as consecutive death ( > Protection time)");
     g_cvPlayerDmg = CreateConVar("sm_respawn_dmg", "1", "Enable Player Damage");
+    g_cvSpawnAlpha = CreateConVar("sm_respawn_alpha", "125", "Alpha on Respawn Protection");
     HookEvent("player_spawn", HkPlayerSpawn, EventHookMode_Post);
     HookEvent("player_death", HkPlayerDeath, EventHookMode_Pre);
     HookEvent("round_freeze_end", HkRoundFreezeEnd, EventHookMode_PostNoCopy);
@@ -144,6 +146,26 @@ public void OnClientPutInServer(int client)
 void RespawnPlayer(int client)
 {
     CS_RespawnPlayer(client);
+    CreateTimer(0.0, HandleProtAlpha, client);
+}
+
+public Action HandleProtAlpha(Handle timer, int client)
+{
+    int r, g, b, a;
+    GetEntityRenderColor(client, r, g, b, a);
+    
+    if (a == g_cvSpawnAlpha.IntValue)
+    {
+        a = 0xFF;
+        CreateTimer(g_cvRespawnProtection.FloatValue, HandleProtAlpha, client);
+    }
+    
+    else
+    {
+        a = g_cvSpawnAlpha.IntValue;
+    }
+    
+    SetEntityRenderColor(client, r, g, b, a);
 }
 
 void HandleDeath(int client)
