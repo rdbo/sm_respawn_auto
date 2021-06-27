@@ -154,7 +154,7 @@ public Action HandleProtAlpha(Handle timer, int client)
     int r, g, b, a;
     GetEntityRenderColor(client, r, g, b, a);
     
-    if (g_LastSpawn[client] - GetGameTime() >= g_cvRespawnProtection.FloatValue)
+    if (GetGameTime() - g_LastSpawn[client] >= g_cvRespawnProtection.FloatValue)
     {
         a = 0xFF;
     }
