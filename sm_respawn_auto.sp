@@ -147,7 +147,6 @@ void RespawnPlayer(int client)
 {
     CS_RespawnPlayer(client);
     CreateTimer(0.0, HandleProtAlpha, client);
-    CreateTimer(g_cvRespawnProtection.FloatValue, HandleProtAlpha, client);
 }
 
 public Action HandleProtAlpha(Handle timer, int client)
@@ -155,10 +154,15 @@ public Action HandleProtAlpha(Handle timer, int client)
     int r, g, b, a;
     GetEntityRenderColor(client, r, g, b, a);
     
-    if (a == g_cvSpawnAlpha.IntValue)
+    if (g_LastSpawn[client] - GetGameTime() >= g_cvRespawnProtection.FloatValue)
+    {
         a = 0xFF;
+    }
     else
+    {
         a = g_cvSpawnAlpha.IntValue;
+        CreateTimer(g_cvRespawnProtection.FloatValue, HandleProtAlpha, client);
+    }
     
     SetEntityRenderColor(client, r, g, b, a);
 }
