@@ -92,6 +92,7 @@ public Action HkPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
     int client = GetClientOfUserId(client_id);
     float game_time = GetGameTime();
     g_LastSpawn[client] = game_time;
+    CreateTimer(0.1, HandleProtAlpha, client);
     return Plugin_Continue;
 }
 
@@ -146,7 +147,6 @@ public void OnClientPutInServer(int client)
 void RespawnPlayer(int client)
 {
     CS_RespawnPlayer(client);
-    CreateTimer(0.0, HandleProtAlpha, client);
 }
 
 public Action HandleProtAlpha(Handle timer, int client)
